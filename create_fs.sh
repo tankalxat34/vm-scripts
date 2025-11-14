@@ -9,6 +9,9 @@ echo "Директория /data"
 if [ -d "/data" ]; then
 	echo "/data существует"
 else
+	echo "Введите размер тома:"
+	read size_data
+
 	echo "Введите путь к физическому тому:"
 	read dev_to_data
 
@@ -21,6 +24,9 @@ echo "Директория /log"
 if [ -d "/log" ]; then
         echo "/log существует"
 else
+        echo "Введите размер тома:"
+        read size_log
+
 	echo "Введите путь к физическому тому:"
         read dev_to_log
 
@@ -33,6 +39,9 @@ echo "Директория /wal"
 if [ -d "/wal" ]; then
         echo "/wal существует"
 else
+        echo "Введите размер тома:"
+        read size_wal
+
 	echo "Введите путь к физическому тому:"
         read dev_to_wal
 
@@ -45,6 +54,9 @@ echo "Директория /backup"
 if [ -d "/backup" ]; then
         echo "/backup существует"
 else
+        echo "Введите размер тома:"
+        read size_backup
+
 	echo "Введите путь к физическому тому:"
         read dev_to_backup
 
