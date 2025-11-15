@@ -36,7 +36,9 @@ echo " 1 - Конфигурация дерева установки с пара�
 	--prefix=$CONF_PREFIX \
 	--with-block-compression \
 	--with-path-checksum \
-	"${OPTIONS[@]}"
+	"${OPTIONS[@]}" > install_postgresql.log 2>&1
+echo "  Успешно!"
+
 echo
 echo " 2 - Запускам сборку"
 if [ $? -eq 0 ]; then
@@ -53,7 +55,7 @@ make install && echo "Сборка успешно установлена!"
 
 echo "##################################################"
 echo " 5 - Меняем владельца в каталоге установки"
-chown -R postgres:postgres $CONF_PREFIX && "успешно"
+chown -R postgres:postgres $CONF_PREFIX
 
 echo
 echo " 6 - Устанавливаем переменные окружения"
@@ -77,33 +79,40 @@ echo "##################################################"
 echo " 7 - Проверяем наличие папок /data/pg_data, /wal/pg_wal, /log/pg_log"
 curdir="/data/pg_data/"
 if [ -d "${curdir}" ]; then
-	mkdir "${curdir}" && chown -R postgres:postgres $curdir && "  ${curdir} создана."
-else
 	echo "${curdir} существует"
+else
+        mkdir "${curdir}" && chown -R postgres:postgres $curdir && "  ${curdir} создана."
 fi
 
 curdir="/log/pg_log"
 if [ -d "${curdir}" ]; then
-        mkdir "${curdir}"  && chown -R postgres:postgres $curdir  && "  ${curdir} создана."
-else
         echo "${curdir} существует"
+else
+        mkdir "${curdir}" && chown -R postgres:postgres $curdir && "  ${curdir} создана."
 fi
+
 
 curdir="/wal/pg_wal"
 if [ -d "${curdir}" ]; then
-        mkdir "${curdir}" && chown -R postgres:postgres $curdir && "  ${curdir} создана."
-else
         echo "${curdir} существует"
+else
+        mkdir "${curdir}" && chown -R postgres:postgres $curdir && "  ${curdir} создана."
 fi
+
 
 echo
 echo " 8 - Инициализируем кластер СУБД в /data/pg_data"
-${CONF_PREFIX}/bin/initdb -D /data/pg_data --waldir=/wal/pg_wal && echo " кластер инициализирован"
+sudo -u postgres $CONF_PREFIX/bin/initdb -k -D /data/pg_data --waldir=/wal/pg_wal && echo " кластер инициализирован"
 
 echo
 echo " 9 - Вносим базовые настройки в postgresql.conf"
 
 echo
 echo " 9 - Запускаем кластер СУБД. Лог пишем в /log/pg_log"
-${CONF_PREFIX}/bin/pg_ctl -D /data/pg_data -l /log/pg_log
+sudo -u postgres $CONF_PREFIX/bin/pg_ctl -D /data/pg_data -l /log/pg_log && echo " кластер запущен"
+
+echo
+echo " 10 - Проверка соединения"
+psql -U postgres -d postgres -c "SELECT now();"
+psql -U postgres -d postgres -c "SELECT pg_version();"
 
