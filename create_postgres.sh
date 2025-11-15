@@ -6,3 +6,6 @@ useradd -m \
 	postgres
 
 usermod -a -G users
+
+echo "Задайте пароль для postgres:"
+passwd postgres
