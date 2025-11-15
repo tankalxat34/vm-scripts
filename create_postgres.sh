@@ -1,7 +1,9 @@
+#!/bin/bash
+
 useradd -m \
 	-d /postgres \
 	-s /bin/bash \
-	-c "Суперпользователь СУБД PostgreSQL"
+	-c "Суперпользователь СУБД PostgreSQL" \
 	-g sudo \
 	postgres
 

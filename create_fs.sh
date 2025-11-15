@@ -1,3 +1,5 @@
+#!/bin/bash
+
 # создает файловую систему для PostgreSQL
 # (c) tankalxat34 - 2025
 

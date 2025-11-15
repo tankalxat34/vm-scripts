@@ -1,3 +1,5 @@
+#!/bin/bash
+
 umount /data
 umount /log
 umount /wal
