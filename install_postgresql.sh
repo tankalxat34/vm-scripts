@@ -123,7 +123,7 @@ echo " 9 - Вносим базовые настройки в postgresql.conf"
 
 echo
 echo " 10 - Запускаем кластер СУБД. Лог пишем в /log/pg_log"
-sudo -u postgres "${CONF_PREFIX}/bin/pg_ctl" -D /data/pg_data -l /log/pg_log && echo " кластер запущен"
+sudo -u postgres "${CONF_PREFIX}/bin/pg_ctl" -D /data/pg_data -l /log/pg_log start && echo " кластер запущен"
 
 echo
 echo " 11 - Проверка соединения"
