@@ -4,10 +4,9 @@ useradd -m \
 	-d /postgres \
 	-s /bin/bash \
 	-c "Суперпользователь СУБД PostgreSQL" \
-	-g sudo \
 	postgres
 
-usermod -a -G users
+usermod -a -G users postgres
 
-echo "Задайте пароль для postgres:"
-passwd postgres
+#echo "Задайте пароль для postgres:"
+#passwd postgres
