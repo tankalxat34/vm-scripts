@@ -66,7 +66,7 @@ logger "Сборка успешно установлена!"
 echo "##################################################"
 
 logger "Устанавливаем переменные окружения"
-export PATH="${CONF_PREFIX}":$PATH
+export PATH="${CONF_PREFIX}/bin":$PATH
 export PGDATA=/data/pg_data
 
 FILE="/etc/profile.d/pgsql.sh"
@@ -74,7 +74,7 @@ cat << EOF > "$FILE"
 #!/bin/bash
 
 # Добавляем каталог PostgreSQL в PATH
-export PATH=${CONF_PREFIX}:\$PATH
+export PATH=${CONF_PREFIX}/bin:\$PATH
 
 # Устанавливаем переменную PGDATA
 export PGDATA=/data/pg_data
@@ -84,7 +84,7 @@ source "$FILE"
 
 echo "##################################################"
 logger "Проверяем наличие папок /data/pg_data, /wal/pg_wal, /log/pg_log"
-curdir="/data/pg_data/"
+curdir="/data/pg_data"
 if [ -d "${curdir}" ]; then
 	echo "${curdir} существует"
 else
@@ -104,6 +104,7 @@ if [ -d "${curdir}" ]; then
         echo "${curdir} существует"
 else
         mkdir "${curdir}" && chown -R postgres:postgres "${curdir}" && echo "  ${curdir} создана."
+	mkdir -p "${curdir}/wal_arc_archive"
 fi
 
 
@@ -124,8 +125,9 @@ chmod 700 /log/pg_log
 logger "Запуск initdb"
 sudo -u postgres "${CONF_PREFIX}/bin/initdb" -k \
 	--locale-provider=icu \
-	--icu-locale="ru_RU.UTF-8" \
-	--encoding="UTF8" \
+	--icu-locale=ru-RU \
+	--timezone=Europe/Moscow \
+	--encoding=UTF8 \
 	-D /data/pg_data \
 	--waldir=/wal/pg_wal
 
@@ -147,13 +149,74 @@ echo "##################################################"
 
 echo
 logger "Вносим базовые настройки в postgresql.conf"
-echo "" >> /data/pg_data/postgresql.conf
-echo "# Настройки install_postgresql.sh"
-echo "logging_collector = on" >> /data/pg_data/postgresql.conf
-echo "log_directory = '/log/pg_log'" >> /data/pg_data/postgresql.conf
-echo "log_filename = 'postgresql-%Y-%m-%d_%H%M%S.log'" >> /data/pg_data/postgresql.conf
-echo "log_rotation_age = 1d" >> /data/pg_data/postgresql.conf
-echo "log_min_duration_statement = 200ms" >> /data/pg_data/postgresql.conf
+logger "Делаем бекап postgresql.conf"
+cp /data/pg_data/postgresql.conf /data/pg_data/postgresql.conf.bak
+logger "Перезаписываем параметры в postgresql.conf"
+# удаляем строки, которые начинаются с этих фраз. перечисление через |
+#grep -vE "timezone" /data/pg_data/postgresql.conf > /data/pg_data/postgresql.conf
+
+echo "" > /data/pg_data/postgresql.conf
+
+FILE="/data/pg_data/postgresql.conf"
+cat << EOF > "$FILE"
+# Настройки install_postgresql.sh
+
+## --- Подключение и аутентификация ---
+max_connections = 100
+
+## --- Логирование ---
+logging_collector = on
+log_directory = '/log/pg_log'
+log_filename = 'postgresql-%Y-%m-%d_%H%M%S.log'
+log_truncate_on_rotation = on
+log_rotation_age = 1d
+log_rotation_size = 100MB
+log_temp_files = 0
+
+## --- Память ---
+shared_buffers = 2GB                         # 25% от RAM (для 16+ GB RAM)
+effective_cache_size = 7GB                   # 75% от RAM
+work_mem = 64MB                              # для сложных сортировок и хешей
+maintenance_work_mem = 2GB                   # для VACUUM, CREATE INDEX и т.п.
+max_worker_processes = 8
+max_parallel_workers = 8
+max_parallel_workers_per_gather = 4
+
+## --- WAL и восстановление ---
+fsync = on
+synchronous_commit = on                      # для ACID-совместимости
+min_wal_size = 1GB
+max_wal_size = 4GB
+checkpoint_completion_target = 0.9
+wal_compression = on
+
+## --- Архивация WAL ---
+archive_mode = off                           # включить при необходимости архивации
+archive_command = ''                         # пример: 'cp %p /path/to/archive/%f'
+
+## --- Автоматическое обслуживание ---
+autovacuum = on
+autovacuum_max_workers = 3
+autovacuum_naptime = 1min
+autovacuum_vacuum_threshold = 50
+autovacuum_analyze_threshold = 50
+autovacuum_vacuum_scale_factor = 0.05
+autovacuum_analyze_scale_factor = 0.02
+autovacuum_vacuum_cost_limit = 200
+autovacuum_vacuum_cost_delay = 20ms
+
+## --- Клиентские параметры ---
+default_transaction_isolation = 'read committed'
+timezone = 'Europe/Moscow'
+lc_messages = 'ru_RU.UTF-8'
+lc_monetary = 'ru_RU.UTF-8'
+lc_numeric = 'ru_RU.UTF-8'
+lc_time = 'ru_RU.UTF-8'
+default_text_search_config = 'pg_catalog.russian'
+
+EOF
+source "$FILE"
+
 
 echo
 logger "Запускаем кластер СУБД. Лог пишем в /log/pg_log"
