@@ -104,7 +104,6 @@ if [ -d "${curdir}" ]; then
         echo "${curdir} существует"
 else
         mkdir "${curdir}" && chown -R postgres:postgres "${curdir}" && echo "  ${curdir} создана."
-	mkdir -p "${curdir}/wal_arc_archive"
 fi
 
 
@@ -126,7 +125,6 @@ logger "Запуск initdb"
 sudo -u postgres "${CONF_PREFIX}/bin/initdb" -k \
 	--locale-provider=icu \
 	--icu-locale=ru-RU \
-	--timezone=Europe/Moscow \
 	--encoding=UTF8 \
 	-D /data/pg_data \
 	--waldir=/wal/pg_wal
@@ -157,66 +155,60 @@ logger "Перезаписываем параметры в postgresql.conf"
 
 echo "" > /data/pg_data/postgresql.conf
 
-FILE="/data/pg_data/postgresql.conf"
-cat << EOF > "$FILE"
-# Настройки install_postgresql.sh
-
-## --- Подключение и аутентификация ---
-max_connections = 100
-
-## --- Логирование ---
-logging_collector = on
-log_directory = '/log/pg_log'
-log_filename = 'postgresql-%Y-%m-%d_%H%M%S.log'
-log_truncate_on_rotation = on
-log_rotation_age = 1d
-log_rotation_size = 100MB
-log_temp_files = 0
-
-## --- Память ---
-shared_buffers = 2GB                         # 25% от RAM (для 16+ GB RAM)
-effective_cache_size = 7GB                   # 75% от RAM
-work_mem = 64MB                              # для сложных сортировок и хешей
-maintenance_work_mem = 2GB                   # для VACUUM, CREATE INDEX и т.п.
-max_worker_processes = 8
-max_parallel_workers = 8
-max_parallel_workers_per_gather = 4
-
-## --- WAL и восстановление ---
-fsync = on
-synchronous_commit = on                      # для ACID-совместимости
-min_wal_size = 1GB
-max_wal_size = 4GB
-checkpoint_completion_target = 0.9
-wal_compression = on
-
-## --- Архивация WAL ---
-archive_mode = off                           # включить при необходимости архивации
-archive_command = ''                         # пример: 'cp %p /path/to/archive/%f'
-
-## --- Автоматическое обслуживание ---
-autovacuum = on
-autovacuum_max_workers = 3
-autovacuum_naptime = 1min
-autovacuum_vacuum_threshold = 50
-autovacuum_analyze_threshold = 50
-autovacuum_vacuum_scale_factor = 0.05
-autovacuum_analyze_scale_factor = 0.02
-autovacuum_vacuum_cost_limit = 200
-autovacuum_vacuum_cost_delay = 20ms
-
-## --- Клиентские параметры ---
-default_transaction_isolation = 'read committed'
-timezone = 'Europe/Moscow'
-lc_messages = 'ru_RU.UTF-8'
-lc_monetary = 'ru_RU.UTF-8'
-lc_numeric = 'ru_RU.UTF-8'
-lc_time = 'ru_RU.UTF-8'
-default_text_search_config = 'pg_catalog.russian'
-
-EOF
-source "$FILE"
-
+echo "# Настройки install_postgresql.sh" >> /data/pg_data/postgresql.conf
+echo "" >> /data/pg_data/postgresql.conf
+echo "## --- Подключение и аутентификация ---" >> /data/pg_data/postgresql.conf
+echo "max_connections = 100" >> /data/pg_data/postgresql.conf
+echo "" >> /data/pg_data/postgresql.conf
+echo "## --- Логирование ---" >> /data/pg_data/postgresql.conf
+echo "logging_collector = on" >> /data/pg_data/postgresql.conf
+echo "log_directory = '/log/pg_log'" >> /data/pg_data/postgresql.conf
+echo "log_filename = 'postgresql-%Y-%m-%d_%H%M%S.log'" >> /data/pg_data/postgresql.conf
+echo "log_truncate_on_rotation = on" >> /data/pg_data/postgresql.conf
+echo "log_rotation_age = 1d" >> /data/pg_data/postgresql.conf
+echo "log_rotation_size = 100MB" >> /data/pg_data/postgresql.conf
+echo "log_temp_files = 0" >> /data/pg_data/postgresql.conf
+echo "" >> /data/pg_data/postgresql.conf
+echo "## --- Память ---" >> /data/pg_data/postgresql.conf
+echo "shared_buffers = 2GB                         # 25% от RAM (для 16+ GB RAM)" >> /data/pg_data/postgresql.conf
+echo "effective_cache_size = 7GB                   # 75% от RAM" >> /data/pg_data/postgresql.conf
+echo "work_mem = 64MB                              # для сложных сортировок и хешей" >> /data/pg_data/postgresql.conf
+echo "maintenance_work_mem = 2GB                   # для VACUUM, CREATE INDEX и т.п." >> /data/pg_data/postgresql.conf
+echo "max_worker_processes = 8" >> /data/pg_data/postgresql.conf
+echo "max_parallel_workers = 8" >> /data/pg_data/postgresql.conf
+echo "max_parallel_workers_per_gather = 4" >> /data/pg_data/postgresql.conf
+echo "" >> /data/pg_data/postgresql.conf
+echo "## --- WAL и восстановление ---" >> /data/pg_data/postgresql.conf
+echo "fsync = on" >> /data/pg_data/postgresql.conf
+echo "synchronous_commit = on                      # для ACID-совместимости" >> /data/pg_data/postgresql.conf
+echo "min_wal_size = 1GB" >> /data/pg_data/postgresql.conf
+echo "max_wal_size = 4GB" >> /data/pg_data/postgresql.conf
+echo "checkpoint_completion_target = 0.9" >> /data/pg_data/postgresql.conf
+echo "wal_compression = on" >> /data/pg_data/postgresql.conf
+echo "" >> /data/pg_data/postgresql.conf
+echo "## --- Архивация WAL ---" >> /data/pg_data/postgresql.conf
+echo "archive_mode = off                           # включить при необходимости архивации" >> /data/pg_data/postgresql.conf
+echo "archive_command = ''                         # пример: 'cp %p /path/to/archive/%f'" >> /data/pg_data/postgresql.conf
+echo "" >> /data/pg_data/postgresql.conf
+echo "## --- Автоматическое обслуживание ---" >> /data/pg_data/postgresql.conf
+echo "autovacuum = on" >> /data/pg_data/postgresql.conf
+echo "autovacuum_max_workers = 3" >> /data/pg_data/postgresql.conf
+echo "autovacuum_naptime = 1min" >> /data/pg_data/postgresql.conf
+echo "autovacuum_vacuum_threshold = 50" >> /data/pg_data/postgresql.conf
+echo "autovacuum_analyze_threshold = 50" >> /data/pg_data/postgresql.conf
+echo "autovacuum_vacuum_scale_factor = 0.05" >> /data/pg_data/postgresql.conf
+echo "autovacuum_analyze_scale_factor = 0.02" >> /data/pg_data/postgresql.conf
+echo "autovacuum_vacuum_cost_limit = 200" >> /data/pg_data/postgresql.conf
+echo "autovacuum_vacuum_cost_delay = 20ms" >> /data/pg_data/postgresql.conf
+echo "" >> /data/pg_data/postgresql.conf
+echo "## --- Клиентские параметры ---" >> /data/pg_data/postgresql.conf
+echo "default_transaction_isolation = 'read committed'" >> /data/pg_data/postgresql.conf
+echo "timezone = 'Europe/Moscow'" >> /data/pg_data/postgresql.conf
+#echo "#lc_messages = 'ru_RU.UTF-8'" >> /data/pg_data/postgresql.conf
+#echo "#lc_monetary = 'ru_RU.UTF-8'" >> /data/pg_data/postgresql.conf
+#echo "#lc_numeric = 'ru_RU.UTF-8'" >> /data/pg_data/postgresql.conf
+#echo "#lc_time = 'ru_RU.UTF-8'" >> /data/pg_data/postgresql.conf
+echo "default_text_search_config = 'pg_catalog.russian'" >> /data/pg_data/postgresql.conf
 
 echo
 logger "Запускаем кластер СУБД. Лог пишем в /log/pg_log"
@@ -229,7 +221,7 @@ sudo -u postgres "${CONF_PREFIX}/bin/psql" -c "SELECT now();"
 
 echo
 echo "  Установленная версия PostgreSQL:"
-sudo -u postgres "${CONF_PREFIX}/bin/psql" -c "SELECT pg_version();"
+sudo -u postgres "${CONF_PREFIX}/bin/psql" -c "SELECT version();"
 
 
 echo
