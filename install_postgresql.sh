@@ -149,6 +149,7 @@ echo
 logger "Вносим базовые настройки в postgresql.conf"
 logger "Делаем бекап postgresql.conf"
 cp /data/pg_data/postgresql.conf /data/pg_data/postgresql.conf.bak
+chown postgres:postgres /data/pg_data/postgresql.conf.bak
 logger "Перезаписываем параметры в postgresql.conf"
 # удаляем строки, которые начинаются с этих фраз. перечисление через |
 #grep -vE "timezone" /data/pg_data/postgresql.conf > /data/pg_data/postgresql.conf
