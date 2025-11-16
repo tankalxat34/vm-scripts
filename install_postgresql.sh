@@ -5,6 +5,13 @@
 # (c) tankalxat34 - 2025
 
 OPTIONS=("$@")
+LOG_PATH="/scripts/log/postgresql_installation_${date}"
+
+if [ ! whoami -eq "root" ]; then
+	echo "Необходимо запускать скрипт от имени root!"
+	echo "Введите: sudo install_postgresql.sh"
+	exit 2
+fi
 
 echo "##################################################"
 echo " Введите путь распакованным исходникам PostgreSQL:"
@@ -31,35 +38,39 @@ echo
 echo "##################################################"
 echo "Запускаем установку PostgreSQL"
 
-touch /scripts/install_postgresql.log
+touch $LOG_PATH
 
 echo " 1 - Конфигурация дерева установки с параметрами сборки"
 cd $path_to_sources
 
 echo "  Очищаю предыдущую сборку"
-date && time make distclean >> /scripts/install_postgresql.log 2>&1 && date
+make distclean >> $LOG_PATH 2>&1
+echo "  Успешно!"
 
 ./configure \
 	--prefix=$CONF_PREFIX \
 	--with-block-compression \
 	--with-path-checksum \
-	"${OPTIONS[@]}" >> /scripts/install_postgresql.log 2>&1
+	"${OPTIONS[@]}" >> $LOG_PATH 2>&1
 echo "  Успешно!"
 
 echo
 echo " 2 - Запускам сборку"
 if [ $? -eq 0 ]; then
 	echo "  Начинаю новую сборку"
-	date && time make && date >> /scripts/install_postgresql.log  2>&1 && date && echo "  Сборка окончена"
+	make >> $LOG_PATH  2>&1
+	echo "  Сборка окончена"
 	echo "  Тестирую сборку"
-	date && time make check && date >> /scripts/install_postgresql.log  2>&1 && date
+	make check >> $LOG_PATH  2>&1
 else
 	echo "Конфигурация с ошибками, продолжение невозможно"
 	exit 2
 fi
+echo "  Успешно!"
 
 echo " 4 - Устанавливаем сборку"
-date && time make install >> /scripts/install_postgresql.log  2>&1 && date && echo "Сборка успешно установлена!"
+make install >> $LOG_PATH  2>&1
+echo "Сборка успешно установлена!"
 
 echo "##################################################"
 echo " 5 - Меняем владельца в каталоге установки"
@@ -113,10 +124,20 @@ echo " 8 - Инициализируем кластер СУБД в /data/pg_data
 sudo -u postgres "${CONF_PREFIX}/bin/initdb" -k \
 	--locale="ru_RU.UTF-8" \
 	--encoding="UTF8" \
-	--timezone="Europe/Moscow" \
 	-D /data/pg_data \
-	--waldir=/wal/pg_wal \
-	&& echo " кластер инициализирован"
+	--waldir=/wal/pg_wal
+
+if [ ! $? -eq 0 ]; then
+	echo "ОШИБКА: Кластер инициализирован с ошибкой. Продолжение невозможно!"
+	exit 10
+fi
+
+echo "##################################################"
+echo " Кластер PostgreSQL инициализирован:"
+echo "  PG Data:   /data/pg_data"
+echo "  PG Server: ${CONF_PREFIX}"
+echo "  WAL files: /wal/pg_wal"
+echo "##################################################"
 
 echo
 echo " 9 - Вносим базовые настройки в postgresql.conf"
@@ -127,7 +148,11 @@ sudo -u postgres "${CONF_PREFIX}/bin/pg_ctl" -D /data/pg_data -l /log/pg_log sta
 
 echo
 echo " 11 - Проверка соединения"
+echo "  Текущее время из БД postgres:"
 sudo -u postgres "${CONF_PREFIX}/bin/psql" -c "SELECT now();"
+
+echo
+echo "  Установленная версия PostgreSQL:"
 sudo -u postgres "${CONF_PREFIX}/bin/psql" -c "SELECT pg_version();"
 
 echo
@@ -135,3 +160,4 @@ echo "##################################################"
 echo "СУБД PostgreSQL успешно установлена. Для "
 echo "применения переменных окружения и путей к"
 echo "исполняемым файлам необходимо перезайти на сервер."
+
