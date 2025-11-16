@@ -7,13 +7,13 @@
 OPTIONS=("$@")
 
 LOG_DATE=$(date +"%Y-%m-%d_%H-%M-%S")
-LOG_PATH="/scripts/log/install_postgresql__${LOG_DATE}.log"
+LOG_PATH="/scripts/log/compile_postgresql__${LOG_DATE}.log"
 
 
 logger() {
-	local cur_date=$(date +"%Y-%m-%d_%H-%M-%S")
+	local cur_date=$(date +"%Y-%m-%d %H:%M:%S")
 	local msg=$1
-	echo "${cur_date} : ${msg}"
+	echo "\[${cur_date}\] : ${msg}"
 }
 
 has_option() {
@@ -59,7 +59,7 @@ fi
 echo
 
 echo "##################################################"
-logger "Запускаем установку PostgreSQL"
+logger "Запускаем компиляцию PostgreSQL"
 
 logger "1 - Конфигурация дерева установки с параметрами сборки"
 cd $path_to_sources
@@ -77,12 +77,11 @@ logger "Создание конфигурации для новой сборки
 logger "Успешно!"
 
 echo
-logger "2 - Запускам сборку"
+logger "2 - Запускам сборку из конфигурации"
 if [ $? -eq 0 ]; then
-	logger "Начинаю новую сборку"
+	logger "Запуск сборки"
 	make >> "${LOG_PATH}"  2>&1
-	logger "Сборка окончена"
-	logger "Тестирую сборку"
+	logger "Тестирование сборки"
 	make check >> "${LOG_PATH}"  2>&1
 else
 	logger "Конфигурация с ошибками, продолжение невозможно"
@@ -91,5 +90,5 @@ fi
 logger "Успешно!"
 
 echo "##################################################"
-echo " Сборка PostgreSQL успешно осуществлена!"
+echo " Сборка PostgreSQL успешно выполнена!"
 echo " Для ее установки запустите скрипт install_postgresql.sh"

@@ -11,9 +11,9 @@ LOG_PATH="/scripts/log/install_postgresql__${LOG_DATE}.log"
 
 
 logger() {
-	local cur_date=$(date +"%Y-%m-%d_%H-%M-%S")
-	local msg=$1
-	echo "${cur_date} : ${msg}"
+        local cur_date=$(date +"%Y-%m-%d %H:%M:%S")
+        local msg=$1
+        echo "\[${cur_date}\] : ${msg}"
 }
 
 has_option() {
@@ -60,12 +60,12 @@ echo
 
 echo "##################################################"
 logger "Запускаем установку PostgreSQL"
-
 make install >> "${LOG_PATH}"  2>&1
 logger "Сборка успешно установлена!"
 
 echo "##################################################"
-logger "5 - Устанавливаем переменные окружения"
+
+logger "Устанавливаем переменные окружения"
 export PATH="${CONF_PREFIX}":$PATH
 export PGDATA=/data/pg_data
 
@@ -83,7 +83,7 @@ EOF
 source "$FILE"
 
 echo "##################################################"
-logger "6 - Проверяем наличие папок /data/pg_data, /wal/pg_wal, /log/pg_log"
+logger "Проверяем наличие папок /data/pg_data, /wal/pg_wal, /log/pg_log"
 curdir="/data/pg_data/"
 if [ -d "${curdir}" ]; then
 	echo "${curdir} существует"
@@ -108,17 +108,20 @@ fi
 
 
 echo
-logger "7 - Инициализируем кластер СУБД в /data/pg_data"
-echo "  Меняем владельца"
+logger "Инициализируем кластер СУБД в /data/pg_data"
+echo "  Меняем владельца root -> postgres"
 chown -R postgres:postgres "${CONF_PREFIX}"
 chown -R postgres:postgres /data/pg_data
 chown -R postgres:postgres /wal/pg_wal
 chown -R postgres:postgres /log/pg_log
 
+echo "  Устанавливаем права 700 "
+chmod 700 "${CONF_PREFIX}"
 chmod 700 /data/pg_data
 chmod 700 /wal/pg_wal
 chmod 700 /log/pg_log
 
+logger "Запуск initdb"
 sudo -u postgres "${CONF_PREFIX}/bin/initdb" -k \
 	--locale-provider=icu \
 	--icu-locale="ru_RU.UTF-8" \
@@ -131,24 +134,33 @@ if [ ! $? -eq 0 ]; then
 	exit 10
 fi
 
+logger "Успешно!"
+
 echo "##################################################"
 logger " Кластер PostgreSQL инициализирован"
 echo " Пути установки:"
 echo "  PG Data:   /data/pg_data"
 echo "  WAL files: /wal/pg_wal"
 echo "  PG Server: ${CONF_PREFIX}"
-echo "  PG Utils: ${CONF_PREFIX}/bin"
+echo "  PG Utils:  ${CONF_PREFIX}/bin"
 echo "##################################################"
 
 echo
-logger "8 - Вносим базовые настройки в postgresql.conf"
+logger "Вносим базовые настройки в postgresql.conf"
+echo "" >> /data/pg_data/postgresql.conf
+echo "# Настройки install_postgresql.sh"
+echo "logging_collector = on" >> /data/pg_data/postgresql.conf
+echo "log_directory = '/log/pg_log'" >> /data/pg_data/postgresql.conf
+echo "log_filename = 'postgresql-%Y-%m-%d_%H%M%S.log'" >> /data/pg_data/postgresql.conf
+echo "log_rotation_age = 1d" >> /data/pg_data/postgresql.conf
+echo "log_min_duration_statement = 200ms" >> /data/pg_data/postgresql.conf
 
 echo
-logger "9 - Запускаем кластер СУБД. Лог пишем в /log/pg_log"
-sudo -u postgres "${CONF_PREFIX}/bin/pg_ctl" -D /data/pg_data -l /log/pg_log start && echo " кластер запущен"
+logger "Запускаем кластер СУБД. Лог пишем в /log/pg_log"
+sudo -u postgres "${CONF_PREFIX}/bin/pg_ctl" -D /data/pg_data start && echo " кластер запущен"
 
 echo
-logger "10 - Проверка соединения"
+logger "Проверка соединения"
 echo "  Текущее время из БД postgres:"
 sudo -u postgres "${CONF_PREFIX}/bin/psql" -c "SELECT now();"
 
