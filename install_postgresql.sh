@@ -5,9 +5,9 @@
 # (c) tankalxat34 - 2025
 
 OPTIONS=("$@")
-LOG_PATH="/scripts/log/postgresql_installation_${date}"
+LOG_PATH="/scripts/log/postgresql_installation_$(date).log"
 
-if [ ! whoami -eq "root" ]; then
+if [ "$(whoami)" != "root" ]; then
 	echo "Необходимо запускать скрипт от имени root!"
 	echo "Введите: sudo install_postgresql.sh"
 	exit 2
