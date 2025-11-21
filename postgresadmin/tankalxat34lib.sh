@@ -9,7 +9,7 @@
 LOG_STATUS_OK="[OK]"
 LOG_STATUS_ERROR="[ERROR]"
 
-ask () {
+ask() {
     local PROMPT=$1
     local DEFVAL=$2
 
@@ -18,10 +18,15 @@ ask () {
     echo $cin
 }
 
-logmsg () {
-    local date=$(date '%(%Y-%m-%d %H:%M:%S)T\n')
-    local status=$1
-    local msg=$2
 
-    echo -e "${date} %-3s ${status} %-3s : %-3s ${msg}"
+logmsg() {
+    # Получаем текущее время
+    local exitcode=$?
+    local timestamp=$(date '+%Y-%m-%d %H:%M:%S')
+    local status=$1
+    # Форматируем и выводим сообщение
+    echo "[${timestamp}] [${status}] $2"
+
+    # Возвращаем соответствующий код выхода
+    return ${exitcode}
 }

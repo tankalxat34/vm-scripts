@@ -11,13 +11,16 @@ echo "!!! Перед продолжением убедиться, что пар�
 echo "# ------------------------------------------------"
 echo ""
 
-if [ -d ./tankalxat34lib.sh ]; then
-  ./tankalxat34lib.sh
-  echo "Импортирована библиотека tankalxat34lib"
+if [ -e "./tankalxat34lib.sh" ]; then
+  source tankalxat34lib.sh
+  logmsg "OK" "Импортирована библиотека tankalxat34lib"
 else
   echo "Библиотека tankalxat34lib не найдена"
   exit 1
 fi
+
+read -p "Введите через пробел роли пользователей:" -a ROLNAMES
+read -p "Введите через пробел имена или ip-адреса серверов СУБД:" -a SERVERS
 
 STR_SERVERS=$(printf "%s_" "${SERVERS[@]}" | sed 's/_$//')
 TARGETDIR=~/passwds
@@ -31,10 +34,10 @@ for usename in "${ROLNAMES[@]}"; do
 
   echo "${usename} : ${passwd} :${arcpasswd}"
   for server in "${SERVERS[@]}"; do
-    psql -x -h $server -c"select rolname,rolpasssetat from pg_roles where rolname='${usename}';" && \
-      psql -h $server -c "ALTERROLE ${usename} PASSWORD '${passwd}' ;" && \
-      psql -x -h $server -c"select rolname,rolpasssetat from pg_roles where rolname='${usename}';" && \
-        echo "${server} учетная запись ${usename} - обновлен пароль на ${passwd}"
+    psql -x -h $server -c "select rolname from pg_roles where rolname='${usename}';" && \
+      psql -h $server -c "ALTER ROLE ${usename} PASSWORD '${passwd}' ;" && \
+      psql -x -h $server -c "select rolname from pg_roles where rolname='${usename}';" && \
+        logmsg "OK" "${server} учетная запись ${usename} - установлен пароль на ${passwd}"
   done
 
   filename="${TARGETDIR}/${usename}_${STR_SERVERS}.txt"
@@ -43,5 +46,5 @@ for usename in "${ROLNAMES[@]}"; do
   echo -e "  Пользователь СУБД:${usename}"  >> $filename
   echo -e "  Пароль: ${passwd}"             >> $filename
   echo -e "  Пароль к архиву: ${arcpasswd}" >> $filename
-  zip -j -P "${arcpasswd}""$TARGETDIR/${usename}_${STR_SERVERS}.zip" $filename
+  zip -j -P "${arcpasswd}" "$TARGETDIR/${usename}_${STR_SERVERS}.zip" $filename
 done
