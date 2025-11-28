@@ -33,6 +33,9 @@ if [ "$(whoami)" != "root" ]; then
 	exit 2
 fi
 
+logger "Устанавливаю зависимости"
+apt install -y make gcc pkgconf bison flex icu-devtools libicu-dev libreadline-dev zlib1g-dev > /dev/null 2>&1
+
 mkdir /scripts/log >> /dev/null 2>&1
 touch "${LOG_PATH}"
 
