@@ -7,13 +7,13 @@
 OPTIONS=("$@")
 
 LOG_DATE=$(date +"%Y-%m-%d_%H-%M-%S")
-LOG_PATH="/scripts/log/install_postgresql__${LOG_DATE}.log"
+LOG_PATH="/postgres/install_postgresql__${LOG_DATE}.log"
 
 
 logger() {
         local cur_date=$(date +"%Y-%m-%d %H:%M:%S")
         local msg=$1
-        echo "\[${cur_date}\] : ${msg}"
+        echo "[${cur_date}] : ${msg}"
 }
 
 has_option() {
@@ -28,9 +28,9 @@ has_option() {
 
 logger "Проверка параметров запуска скрипта"
 if [ "$(whoami)" != "root" ]; then
-	echo "Необходимо запускать скрипт от имени root!"
-	echo "Введите: sudo install_postgresql.sh"
-	exit 2
+        echo "Необходимо запускать скрипт от имени root!"
+        echo "Введите: sudo install_postgresql.sh"
+        exit 2
 fi
 
 mkdir /scripts/log >> /dev/null 2>&1
@@ -46,9 +46,11 @@ CONF_PREFIX=${CONF_PREFIX:-/usr/local/pgsql}
 echo
 
 cd $path_to_sources
+echo $(pwd)
+
 if [ ! -e  "configure" ]; then
-	echo "Отсутсвует файл configure в расположении: $path_to_sources"
-	exit 1
+        echo "Отсутсвует файл configure в расположении: $path_to_sources"
+        exit 1
 fi
 if [ ! -e  "Makefile" ]; then
         echo "Отсутсвует файл Makefile в расположении: $path_to_sources"
@@ -86,7 +88,7 @@ echo "##################################################"
 logger "Проверяем наличие папок /data/pg_data, /wal/pg_wal, /log/pg_log"
 curdir="/data/pg_data"
 if [ -d "${curdir}" ]; then
-	echo "${curdir} существует"
+        echo "${curdir} существует"
 else
         mkdir "${curdir}" && chown -R postgres:postgres "${curdir}" && echo "  ${curdir} создана."
 fi
@@ -123,15 +125,15 @@ chmod 700 /log/pg_log
 
 logger "Запуск initdb"
 sudo -u postgres "${CONF_PREFIX}/bin/initdb" -k \
-	--locale-provider=icu \
-	--icu-locale=ru-RU \
-	--encoding=UTF8 \
-	-D /data/pg_data \
-	--waldir=/wal/pg_wal
+        --locale-provider=icu \
+        --icu-locale=ru-RU \
+        --encoding=UTF8 \
+        -D /data/pg_data \
+        --waldir=/wal/pg_wal
 
 if [ ! $? -eq 0 ]; then
-	logger "ОШИБКА: Кластер не был инициализирован из-за ошибки. Продолжение невозможно!"
-	exit 10
+        logger "ОШИБКА: Кластер не был инициализирован из-за ошибки. Продолжение невозможно!"
+        exit 10
 fi
 
 logger "Успешно!"
@@ -232,4 +234,3 @@ logger "СУБД PostgreSQL успешно установлена!"
 echo
 echo "Для применения переменных окружения и путей к"
 echo "исполняемым файлам необходимо перезайти на сервер."
-
