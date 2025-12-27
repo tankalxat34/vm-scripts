@@ -164,6 +164,7 @@ echo "# Настройки install_postgresql.sh" >> $POSTGRES_CONFIG
 echo "" >> $POSTGRES_CONFIG
 echo "## --- Подключение и аутентификация ---" >> $POSTGRES_CONFIG
 echo "max_connections = 100" >> $POSTGRES_CONFIG
+echo "listen_addresses = '0.0.0.0'" >> $POSTGRES_CONFIG
 echo "" >> $POSTGRES_CONFIG
 echo "## --- Логирование ---" >> $POSTGRES_CONFIG
 echo "logging_collector = on" >> $POSTGRES_CONFIG
