@@ -147,71 +147,73 @@ echo "  PG Server: ${CONF_PREFIX}"
 echo "  PG Utils:  ${CONF_PREFIX}/bin"
 echo "##################################################"
 
+POSTGRES_CONFIG=/data/pg_data/postgresql.auto.conf
+
 echo
-logger "Вносим базовые настройки в postgresql.conf"
-logger "Делаем бекап postgresql.conf"
-cp /data/pg_data/postgresql.conf /data/pg_data/postgresql.conf.bak
-chown postgres:postgres /data/pg_data/postgresql.conf.bak
-logger "Перезаписываем параметры в postgresql.conf"
+logger "Вносим базовые настройки в ${POSTGRES_CONFIG}"
+logger "Делаем бекап ${POSTGRES_CONFIG}"
+cp $POSTGRES_CONFIG $POSTGRES_CONFIG.bak
+chown postgres:postgres $POSTGRES_CONFIG.bak
+logger "Перезаписываем параметры в ${POSTGRES_CONFIG}"
 # удаляем строки, которые начинаются с этих фраз. перечисление через |
-#grep -vE "timezone" /data/pg_data/postgresql.conf > /data/pg_data/postgresql.conf
+#grep -vE "timezone" $POSTGRES_CONFIG > $POSTGRES_CONFIG
 
-echo "" > /data/pg_data/postgresql.conf
+echo "" > $POSTGRES_CONFIG
 
-echo "# Настройки install_postgresql.sh" >> /data/pg_data/postgresql.conf
-echo "" >> /data/pg_data/postgresql.conf
-echo "## --- Подключение и аутентификация ---" >> /data/pg_data/postgresql.conf
-echo "max_connections = 100" >> /data/pg_data/postgresql.conf
-echo "" >> /data/pg_data/postgresql.conf
-echo "## --- Логирование ---" >> /data/pg_data/postgresql.conf
-echo "logging_collector = on" >> /data/pg_data/postgresql.conf
-echo "log_directory = '/log/pg_log'" >> /data/pg_data/postgresql.conf
-echo "log_filename = 'postgresql-%Y-%m-%d_%H%M%S.log'" >> /data/pg_data/postgresql.conf
-echo "log_truncate_on_rotation = on" >> /data/pg_data/postgresql.conf
-echo "log_rotation_age = 1d" >> /data/pg_data/postgresql.conf
-echo "log_rotation_size = 100MB" >> /data/pg_data/postgresql.conf
-echo "log_temp_files = 0" >> /data/pg_data/postgresql.conf
-echo "" >> /data/pg_data/postgresql.conf
-echo "## --- Память ---" >> /data/pg_data/postgresql.conf
-echo "shared_buffers = 2GB                         # 25% от RAM (для 16+ GB RAM)" >> /data/pg_data/postgresql.conf
-echo "effective_cache_size = 7GB                   # 75% от RAM" >> /data/pg_data/postgresql.conf
-echo "work_mem = 64MB                              # для сложных сортировок и хешей" >> /data/pg_data/postgresql.conf
-echo "maintenance_work_mem = 2GB                   # для VACUUM, CREATE INDEX и т.п." >> /data/pg_data/postgresql.conf
-echo "max_worker_processes = 8" >> /data/pg_data/postgresql.conf
-echo "max_parallel_workers = 8" >> /data/pg_data/postgresql.conf
-echo "max_parallel_workers_per_gather = 4" >> /data/pg_data/postgresql.conf
-echo "" >> /data/pg_data/postgresql.conf
-echo "## --- WAL и восстановление ---" >> /data/pg_data/postgresql.conf
-echo "fsync = on" >> /data/pg_data/postgresql.conf
-echo "synchronous_commit = on                      # для ACID-совместимости" >> /data/pg_data/postgresql.conf
-echo "min_wal_size = 1GB" >> /data/pg_data/postgresql.conf
-echo "max_wal_size = 4GB" >> /data/pg_data/postgresql.conf
-echo "checkpoint_completion_target = 0.9" >> /data/pg_data/postgresql.conf
-echo "wal_compression = on" >> /data/pg_data/postgresql.conf
-echo "" >> /data/pg_data/postgresql.conf
-echo "## --- Архивация WAL ---" >> /data/pg_data/postgresql.conf
-echo "archive_mode = off                           # включить при необходимости архивации" >> /data/pg_data/postgresql.conf
-echo "archive_command = ''                         # пример: 'cp %p /path/to/archive/%f'" >> /data/pg_data/postgresql.conf
-echo "" >> /data/pg_data/postgresql.conf
-echo "## --- Автоматическое обслуживание ---" >> /data/pg_data/postgresql.conf
-echo "autovacuum = on" >> /data/pg_data/postgresql.conf
-echo "autovacuum_max_workers = 3" >> /data/pg_data/postgresql.conf
-echo "autovacuum_naptime = 1min" >> /data/pg_data/postgresql.conf
-echo "autovacuum_vacuum_threshold = 50" >> /data/pg_data/postgresql.conf
-echo "autovacuum_analyze_threshold = 50" >> /data/pg_data/postgresql.conf
-echo "autovacuum_vacuum_scale_factor = 0.05" >> /data/pg_data/postgresql.conf
-echo "autovacuum_analyze_scale_factor = 0.02" >> /data/pg_data/postgresql.conf
-echo "autovacuum_vacuum_cost_limit = 200" >> /data/pg_data/postgresql.conf
-echo "autovacuum_vacuum_cost_delay = 20ms" >> /data/pg_data/postgresql.conf
-echo "" >> /data/pg_data/postgresql.conf
-echo "## --- Клиентские параметры ---" >> /data/pg_data/postgresql.conf
-echo "default_transaction_isolation = 'read committed'" >> /data/pg_data/postgresql.conf
-echo "timezone = 'Europe/Moscow'" >> /data/pg_data/postgresql.conf
-#echo "#lc_messages = 'ru_RU.UTF-8'" >> /data/pg_data/postgresql.conf
-#echo "#lc_monetary = 'ru_RU.UTF-8'" >> /data/pg_data/postgresql.conf
-#echo "#lc_numeric = 'ru_RU.UTF-8'" >> /data/pg_data/postgresql.conf
-#echo "#lc_time = 'ru_RU.UTF-8'" >> /data/pg_data/postgresql.conf
-echo "default_text_search_config = 'pg_catalog.russian'" >> /data/pg_data/postgresql.conf
+echo "# Настройки install_postgresql.sh" >> $POSTGRES_CONFIG
+echo "" >> $POSTGRES_CONFIG
+echo "## --- Подключение и аутентификация ---" >> $POSTGRES_CONFIG
+echo "max_connections = 100" >> $POSTGRES_CONFIG
+echo "" >> $POSTGRES_CONFIG
+echo "## --- Логирование ---" >> $POSTGRES_CONFIG
+echo "logging_collector = on" >> $POSTGRES_CONFIG
+echo "log_directory = '/log/pg_log'" >> $POSTGRES_CONFIG
+echo "log_filename = '$(hostname -s)-%Y-%m-%d_%H%M%S.log'" >> $POSTGRES_CONFIG
+echo "log_truncate_on_rotation = on" >> $POSTGRES_CONFIG
+echo "log_rotation_age = 1d" >> $POSTGRES_CONFIG
+echo "log_rotation_size = 100MB" >> $POSTGRES_CONFIG
+echo "log_temp_files = 0" >> $POSTGRES_CONFIG
+echo "" >> $POSTGRES_CONFIG
+echo "## --- Память ---" >> $POSTGRES_CONFIG
+echo "shared_buffers = 2GB                         # 25% от RAM (для 16+ GB RAM)" >> $POSTGRES_CONFIG
+echo "effective_cache_size = 7GB                   # 75% от RAM" >> $POSTGRES_CONFIG
+echo "work_mem = 128MB                              # для сложных сортировок и хешей" >> $POSTGRES_CONFIG
+echo "maintenance_work_mem = 2GB                   # для VACUUM, CREATE INDEX и т.п." >> $POSTGRES_CONFIG
+echo "max_worker_processes = 8" >> $POSTGRES_CONFIG
+echo "max_parallel_workers = 8" >> $POSTGRES_CONFIG
+echo "max_parallel_workers_per_gather = 4" >> $POSTGRES_CONFIG
+echo "" >> $POSTGRES_CONFIG
+echo "## --- WAL и восстановление ---" >> $POSTGRES_CONFIG
+echo "fsync = on" >> $POSTGRES_CONFIG
+echo "synchronous_commit = on                      # для ACID-совместимости" >> $POSTGRES_CONFIG
+echo "min_wal_size = 1GB" >> $POSTGRES_CONFIG
+echo "max_wal_size = 4GB" >> $POSTGRES_CONFIG
+echo "checkpoint_completion_target = 0.9" >> $POSTGRES_CONFIG
+echo "wal_compression = on" >> $POSTGRES_CONFIG
+echo "" >> $POSTGRES_CONFIG
+echo "## --- Архивация WAL ---" >> $POSTGRES_CONFIG
+echo "archive_mode = off                           # включить при необходимости архивации" >> $POSTGRES_CONFIG
+echo "archive_command = ''                         # пример: 'cp %p /path/to/archive/%f'" >> $POSTGRES_CONFIG
+echo "" >> $POSTGRES_CONFIG
+echo "## --- Автоматическое обслуживание ---" >> $POSTGRES_CONFIG
+echo "autovacuum = on" >> $POSTGRES_CONFIG
+echo "autovacuum_max_workers = 3" >> $POSTGRES_CONFIG
+echo "autovacuum_naptime = 1min" >> $POSTGRES_CONFIG
+echo "autovacuum_vacuum_threshold = 50" >> $POSTGRES_CONFIG
+echo "autovacuum_analyze_threshold = 50" >> $POSTGRES_CONFIG
+echo "autovacuum_vacuum_scale_factor = 0.05" >> $POSTGRES_CONFIG
+echo "autovacuum_analyze_scale_factor = 0.02" >> $POSTGRES_CONFIG
+echo "autovacuum_vacuum_cost_limit = 200" >> $POSTGRES_CONFIG
+echo "autovacuum_vacuum_cost_delay = 20ms" >> $POSTGRES_CONFIG
+echo "" >> $POSTGRES_CONFIG
+echo "## --- Клиентские параметры ---" >> $POSTGRES_CONFIG
+echo "default_transaction_isolation = 'read committed'" >> $POSTGRES_CONFIG
+echo "timezone = 'Europe/Moscow'" >> $POSTGRES_CONFIG
+#echo "#lc_messages = 'ru_RU.UTF-8'" >> $POSTGRES_CONFIG
+#echo "#lc_monetary = 'ru_RU.UTF-8'" >> $POSTGRES_CONFIG
+#echo "#lc_numeric = 'ru_RU.UTF-8'" >> $POSTGRES_CONFIG
+#echo "#lc_time = 'ru_RU.UTF-8'" >> $POSTGRES_CONFIG
+echo "default_text_search_config = 'pg_catalog.russian'" >> $POSTGRES_CONFIG
 
 echo
 logger "Запускаем кластер СУБД. Лог пишем в /log/pg_log"
